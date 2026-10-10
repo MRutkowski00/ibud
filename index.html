@@ -65,18 +65,20 @@
     /* KRYTYCZNE STYLE DLA WYDRUKU PDF */
     @page { size: A4; margin: 0; }
 
-   @media print {
-      @page { size: A4; margin: 0; }
-      body, html { background: #fff !important; color: #000 !important; width: 100% !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
+ @media print {
+      @page { size: A4 portrait; margin: 0; }
+      body, html { background: #fff !important; color: #000 !important; width: 210mm !important; margin: 0 auto !important; padding: 0 !important; overflow: visible !important; }
       .no-print, header, nav, #structure-subbar, #floating-tools-container, .modal-backdrop { display: none !important; }
       
       .view-panel.hidden { display: none !important; }
-      .view-panel:not(.hidden) { display: block !important; position: static !important; width: 100% !important; padding: 0 !important; margin: 0 !important; height: auto !important; overflow: visible !important; }
+      .view-panel:not(.hidden) { display: flex !important; flex-direction: column !important; align-items: center !important; position: static !important; width: 210mm !important; padding: 0 !important; margin: 0 auto !important; height: auto !important; overflow: visible !important; }
+      
+      .print-panel { display: block !important; position: static !important; width: 210mm !important; margin: 0 auto !important; }
       
       .a4-page {
         width: 210mm !important;
-        height: 296mm !important;
-        max-height: 296mm !important;
+        height: 297mm !important;
+        max-height: 297mm !important;
         margin: 0 auto !important;
         padding: 10mm 15mm !important;
         box-sizing: border-box !important;
@@ -86,6 +88,8 @@
         border: none !important;
         box-shadow: none !important;
         background: white !important;
+        display: flex;
+        flex-direction: column;
       }
       .a4-page:last-child { page-break-after: auto !important; }
     }
@@ -1474,7 +1478,7 @@
       };
     }
 
-  function finishPolygonTakeoff() {
+function finishPolygonTakeoff() {
       if(currentPolygon.length < 3) return;
       
       uiPrompt('Podaj długość OSTATNIEGO (zamykającego) boku w mb (lub wpisz 0, aby pominąć):', '', (v)=>{
@@ -1483,30 +1487,73 @@
         if(isNaN(closingVal) || closingVal < 0) closingVal = 0;
         currentPolygon[currentPolygon.length-1].edgeVal = closingVal;
         
-        const iw = takeoffImg.naturalWidth, ih = takeoffImg.naturalHeight;
-        let totalDistPx = 0, totalRealM = 0;
-        
+        let validEdges = true;
         for(let i=0; i<currentPolygon.length; i++) {
-          let nextI = (i+1)%currentPolygon.length;
-          const dx = (currentPolygon[nextI].x - currentPolygon[i].x)/100 * iw;
-          const dy = (currentPolygon[nextI].y - currentPolygon[i].y)/100 * ih;
-          totalDistPx += Math.sqrt(dx*dx + dy*dy);
-          if(currentPolygon[i].edgeVal > 0) totalRealM += currentPolygon[i].edgeVal;
+            if(!currentPolygon[i].edgeVal || currentPolygon[i].edgeVal <= 0) validEdges = false;
         }
+
+        let areaM2 = 0;
         
-        if(totalRealM === 0) { uiAlert('Wprowadzono 0 mb. Zacznij pomiar m2 od nowa.'); currentPolygon=[]; redrawTakeoffLines(); return; }
-        
-        // Perfekcyjna, matematyczna średnia obwodu:
-        const avgScale = totalDistPx / totalRealM;
-        
-        let areaPx = 0;
-        for(let i=0; i<currentPolygon.length; i++) {
-          let j = (i + 1) % currentPolygon.length;
-          let xi = (currentPolygon[i].x / 100) * iw, yi = (currentPolygon[i].y / 100) * ih;
-          let xj = (currentPolygon[j].x / 100) * iw, yj = (currentPolygon[j].y / 100) * ih;
-          areaPx += (xi * yj) - (xj * yi);
+        if (validEdges && currentPolygon.length === 3) {
+            // Wzór Herona dla 3 boków (zawsze dokładny)
+            const a = currentPolygon[0].edgeVal, b = currentPolygon[1].edgeVal, c = currentPolygon[2].edgeVal;
+            const s = (a + b + c) / 2;
+            const val = s * (s - a) * (s - b) * (s - c);
+            areaM2 = val > 0 ? Math.sqrt(val) : 0;
+        } 
+        else if (validEdges && currentPolygon.length === 4) {
+            // Klasyczny wzór inżynierski dla czworokąta ((a+c)/2 * (b+d)/2)
+            const a = currentPolygon[0].edgeVal, b = currentPolygon[1].edgeVal, c = currentPolygon[2].edgeVal, d = currentPolygon[3].edgeVal;
+            areaM2 = ((a + c) / 2) * ((b + d) / 2);
+        } 
+        else if (validEdges && currentPolygon.length > 4) {
+            // Algorytm wektorowy! Bierze kształt z kliknięć, ale używa WYŁĄCZNIE wpisanych wartości
+            let qPts = [{x: 0, y: 0}];
+            let curX = 0, curY = 0;
+            const iw = takeoffImg.naturalWidth, ih = takeoffImg.naturalHeight;
+            
+            for(let i=0; i<currentPolygon.length; i++) {
+                let nextI = (i+1) % currentPolygon.length;
+                let dx = (currentPolygon[nextI].x - currentPolygon[i].x)/100 * iw;
+                let dy = (currentPolygon[nextI].y - currentPolygon[i].y)/100 * ih;
+                let angle = Math.atan2(dy, dx);
+                
+                // Przemieszczamy się o kąt z rysunku, ale na odległość TWOJEJ wartości!
+                curX += currentPolygon[i].edgeVal * Math.cos(angle);
+                curY += currentPolygon[i].edgeVal * Math.sin(angle);
+                if (i < currentPolygon.length - 1) qPts.push({x: curX, y: curY});
+            }
+            
+            let areaWektor = 0;
+            for(let i=0; i<qPts.length; i++) {
+                let j = (i + 1) % qPts.length;
+                areaWektor += (qPts[i].x * qPts[j].y) - (qPts[j].x * qPts[i].y);
+            }
+            areaM2 = Math.abs(areaWektor) / 2;
         }
-        const areaM2 = Math.abs(areaPx) / 2 / (avgScale * avgScale);
+        else {
+            // Zapasowy wariant (gdy ktoś celowo nie wpisał wartości boku i wpisał 0)
+            const iw = takeoffImg.naturalWidth, ih = takeoffImg.naturalHeight;
+            let totalDistPx = 0, totalRealM = 0;
+            for(let i=0; i<currentPolygon.length; i++) {
+              let nextI = (i+1)%currentPolygon.length;
+              const dx = (currentPolygon[nextI].x - currentPolygon[i].x)/100 * iw;
+              const dy = (currentPolygon[nextI].y - currentPolygon[i].y)/100 * ih;
+              totalDistPx += Math.sqrt(dx*dx + dy*dy);
+              if(currentPolygon[i].edgeVal > 0) totalRealM += currentPolygon[i].edgeVal;
+            }
+            if(totalRealM === 0) { uiAlert('Brak wprowadzonych miar.'); currentPolygon=[]; redrawTakeoffLines(); return; }
+            
+            const avgScale = totalDistPx / totalRealM;
+            let areaPx = 0;
+            for(let i=0; i<currentPolygon.length; i++) {
+              let j = (i + 1) % currentPolygon.length;
+              let xi = (currentPolygon[i].x / 100) * iw, yi = (currentPolygon[i].y / 100) * ih;
+              let xj = (currentPolygon[j].x / 100) * iw, yj = (currentPolygon[j].y / 100) * ih;
+              areaPx += (xi * yj) - (xj * yi);
+            }
+            areaM2 = Math.abs(areaPx) / 2 / (avgScale * avgScale);
+        }
         
         uiPrompt(`Obliczono dokładne pole: ${areaM2.toFixed(2)} m². Podaj nazwę pomiaru:`, 'Powierzchnia', (name)=>{
           if(name) {
