@@ -248,8 +248,8 @@
           <div onclick="openTakeoffModal()" class="bg-[#141414] hover:bg-[#1a1a1a] border border-[#262626] hover:border-emerald-500/50 p-5 rounded-2xl cursor-pointer transition-all flex flex-col justify-between group shadow-xl">
             <div>
               <div class="w-12 h-12 rounded-xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform"><i data-lucide="ruler" class="w-6 h-6"></i></div>
-              <h3 class="font-bold text-white text-base">Księga Obmiarów</h3>
-              <p class="text-xs text-gray-400 mt-1">AutoCAD Style: pomiary mb oraz automatyczne wyliczanie powierzchni wielokątów (m²).</p>
+             <h3 class="font-bold text-white text-base">Księga Obmiarów</h3>
+<p class="text-xs text-gray-400 mt-1">Twórz karty obmiarowe z natury (mb). Mierz kolejne boki figury, a apka wyliczy sumaryczne pole (m²).</p>
             </div>
             <div class="mt-4 pt-3 border-t border-[#222] flex items-center justify-between text-xs text-gray-300">
               <span>Karty obmiarowe:</span><span class="font-bold text-emerald-400" id="dash-count-takeoffs">0 kart</span>
@@ -1445,39 +1445,48 @@
               currentPolygon = []; redrawTakeoffLines();
             });
           }
-        } else {
+  } else {
           // Tryb m2
-          currentPolygon.push({x:pX, y:pY});
-          const step = currentPolygon.length;
-          document.getElementById('takeoff-m2-step').innerText = step;
+          const step = currentPolygon.length + 1;
           
-          if(step === 2 && !session.pxPerMeter) {
-            const dx = (currentPolygon[1].x - currentPolygon[0].x)/100 * takeoffImg.naturalWidth;
-            const dy = (currentPolygon[1].y - currentPolygon[0].y)/100 * takeoffImg.naturalHeight;
-            const pxDist = Math.sqrt(dx*dx + dy*dy);
-            
-            uiPrompt('Zaznaczyłeś odcinek bazowy. Podaj jego długość w metrach (np. 4.5), aby program policzył m2:', '1.0', (v)=>{
-              if(v) {
-                session.pxPerMeter = pxDist / parseFloat(v.replace(',','.'));
-                document.getElementById('takeoff-m2-msg').innerText = 'Kliknij kolejny punkt figury';
-                if(step >= 3) document.getElementById('takeoff-m2-finish-btn').classList.remove('hidden');
-                redrawTakeoffLines();
-              } else { currentPolygon.pop(); redrawTakeoffLines(); } // anulowano
-            });
+          if(step === 1) {
+             currentPolygon.push({x:pX, y:pY});
+             document.getElementById('takeoff-m2-step').innerText = '2';
+             document.getElementById('takeoff-m2-msg').innerText = 'Zaznacz kolejny narożnik figury';
+             redrawTakeoffLines();
           } else {
-            if(step >= 3) document.getElementById('takeoff-m2-finish-btn').classList.remove('hidden');
-            document.getElementById('takeoff-m2-msg').innerText = 'Kliknij kolejny punkt figury';
-            redrawTakeoffLines();
+             uiPrompt('Wpisz rzeczywistą długość tego boku (w metrach):', '', (v)=>{
+                if(v) {
+                   const val = parseFloat(v.replace(',','.'));
+                   if(!isNaN(val) && val > 0) {
+                      currentPolygon.push({x:pX, y:pY, edgeVal: val});
+                      document.getElementById('takeoff-m2-step').innerText = currentPolygon.length + 1;
+                      document.getElementById('takeoff-m2-msg').innerText = 'Zaznacz kolejny narożnik lub zamknij figurę';
+                      if(currentPolygon.length >= 3) document.getElementById('takeoff-m2-finish-btn').classList.remove('hidden');
+                      redrawTakeoffLines();
+                   } else { uiAlert('Błędna wartość'); }
+                }
+             });
           }
         }
       };
     }
+
     function finishPolygonTakeoff() {
       if(currentPolygon.length < 3) return;
       const session = getActiveTakeoffSession();
-      if(!session.pxPerMeter) { uiAlert('Brak danych o skali. Zmierz jeszcze raz.'); currentPolygon=[]; redrawTakeoffLines(); return; }
       
       const iw = takeoffImg.naturalWidth, ih = takeoffImg.naturalHeight;
+      let totalScale = 0; let scaleCount = 0;
+      for(let i=1; i<currentPolygon.length; i++) {
+        const dx = (currentPolygon[i].x - currentPolygon[i-1].x)/100 * iw;
+        const dy = (currentPolygon[i].y - currentPolygon[i-1].y)/100 * ih;
+        const distPx = Math.sqrt(dx*dx + dy*dy);
+        if(currentPolygon[i].edgeVal > 0) { totalScale += (distPx / currentPolygon[i].edgeVal); scaleCount++; }
+      }
+      if(scaleCount === 0) { uiAlert('Brak miar. Zacznij jeszcze raz.'); currentPolygon=[]; redrawTakeoffLines(); return; }
+      
+      const avgScale = totalScale / scaleCount;
       let areaPx = 0;
       for(let i=0; i<currentPolygon.length; i++) {
         let j = (i + 1) % currentPolygon.length;
@@ -1485,11 +1494,11 @@
         let xj = (currentPolygon[j].x / 100) * iw, yj = (currentPolygon[j].y / 100) * ih;
         areaPx += xi * yj - xj * yi;
       }
-      const areaM2 = Math.abs(areaPx) / 2 / (session.pxPerMeter * session.pxPerMeter);
+      const areaM2 = Math.abs(areaPx) / 2 / (avgScale * avgScale);
       
       uiPrompt(`Obliczono pole: ${areaM2.toFixed(2)} m². Podaj nazwę pomiaru:`, 'Powierzchnia', (v)=>{
         if(v) {
-          session.lines.push({ type:'poly', pts:[...currentPolygon], label:areaM2.toFixed(2)+' m2' });
+          session.lines.push({ type:'poly', pts:[...currentPolygon], label:areaM2.toFixed(2)+' m2', edges: currentPolygon.map(p=>p.edgeVal), scale: avgScale });
           session.items.push({ id:`t-${Date.now()}`, desc:v, val:areaM2, unit:'m2' });
           persistData(); renderTakeoffSheet();
         }
@@ -1505,10 +1514,21 @@
         if(l.type==='line') {
           const x1=(l.pts[0].x/100)*iw, y1=(l.pts[0].y/100)*ih, x2=(l.pts[1].x/100)*iw, y2=(l.pts[1].y/100)*ih, mx=(x1+x2)/2, my=(y1+y2)/2;
           takeoffSvgLayer.innerHTML += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#10b981" stroke-width="4"/><circle cx="${x1}" cy="${y1}" r="8" fill="#10b981"/><circle cx="${x2}" cy="${y2}" r="8" fill="#10b981"/><rect x="${mx-45}" y="${my-16}" width="90" height="32" fill="#000" rx="4"/><text x="${mx}" y="${my+5}" fill="#fff" font-size="16" text-anchor="middle" font-weight="bold">${l.label}</text>`;
-        } else {
+  } else {
           const path = l.pts.map((p,i)=>`${i===0?'M':'L'}${(p.x/100)*iw},${(p.y/100)*ih}`).join(' ')+' Z';
           let cx=0, cy=0; l.pts.forEach(p=>{ cx+=(p.x/100)*iw; cy+=(p.y/100)*ih; }); cx/=l.pts.length; cy/=l.pts.length;
           takeoffSvgLayer.innerHTML += `<path d="${path}" fill="rgba(37,99,235,0.3)" stroke="#2563eb" stroke-width="3"/><rect x="${cx-45}" y="${cy-16}" width="90" height="32" fill="#000" rx="4"/><text x="${cx}" y="${cy+5}" fill="#fff" font-size="16" text-anchor="middle" font-weight="bold">${l.label}</text>`;
+          
+          if(l.edges && l.scale) {
+             for(let i=0; i<l.pts.length; i++) {
+                let p1 = l.pts[i], p2 = l.pts[(i+1)%l.pts.length];
+                const mx = ((p1.x + p2.x)/200)*iw, my = ((p1.y + p2.y)/200)*ih;
+                let edgeLen = 0;
+                if(i+1 < l.pts.length && l.edges[i+1]) { edgeLen = l.edges[i+1]; }
+                else { const dx = (p2.x - p1.x)/100 * iw, dy = (p2.y - p1.y)/100 * ih; edgeLen = Math.sqrt(dx*dx + dy*dy) / l.scale; }
+                takeoffSvgLayer.innerHTML += `<rect x="${mx-25}" y="${my-10}" width="50" height="20" fill="rgba(0,0,0,0.7)" rx="4"/><text x="${mx}" y="${my+4}" fill="#fff" font-size="12" text-anchor="middle">${edgeLen.toFixed(2)}m</text>`;
+             }
+          }
         }
       });
       
@@ -1521,12 +1541,10 @@
           currentPolygon.forEach((p, i) => {
             const px=(p.x/100)*iw, py=(p.y/100)*ih;
             takeoffSvgLayer.innerHTML += `<circle cx="${px}" cy="${py}" r="6" fill="red"/>`;
-            if(session.pxPerMeter && i > 0) {
+            if(i > 0 && p.edgeVal) {
                const pPrev = currentPolygon[i-1];
-               const dx = px - (pPrev.x/100)*iw, dy = py - (pPrev.y/100)*ih;
-               const lenM = Math.sqrt(dx*dx + dy*dy) / session.pxPerMeter;
-               const mx = px - dx/2, my = py - dy/2;
-               takeoffSvgLayer.innerHTML += `<rect x="${mx-25}" y="${my-10}" width="50" height="20" fill="rgba(0,0,0,0.7)" rx="4"/><text x="${mx}" y="${my+4}" fill="#fff" font-size="12" text-anchor="middle">${lenM.toFixed(2)}m</text>`;
+               const mx = (px + (pPrev.x/100)*iw)/2, my = (py + (pPrev.y/100)*ih)/2;
+               takeoffSvgLayer.innerHTML += `<rect x="${mx-25}" y="${my-10}" width="50" height="20" fill="rgba(0,0,0,0.7)" rx="4"/><text x="${mx}" y="${my+4}" fill="#fff" font-size="12" text-anchor="middle">${p.edgeVal.toFixed(2)}m</text>`;
             }
           });
         }
@@ -1571,6 +1589,18 @@
               l.pts.forEach((p,i)=> i===0?ctx.moveTo((p.x/100)*img.width,(p.y/100)*img.height):ctx.lineTo((p.x/100)*img.width,(p.y/100)*img.height)); ctx.closePath(); ctx.fill(); ctx.stroke();
               let cx=0, cy=0; l.pts.forEach(p=>{cx+=(p.x/100)*img.width; cy+=(p.y/100)*img.height;}); cx/=l.pts.length; cy/=l.pts.length;
               ctx.fillStyle='#000'; ctx.fillRect(cx-55,cy-20,110,40); ctx.fillStyle='#fff'; ctx.font='bold 22px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(l.label,cx,cy);
+              
+              if(l.edges && l.scale) {
+                 for(let i=0; i<l.pts.length; i++) {
+                    let p1 = l.pts[i], p2 = l.pts[(i+1)%l.pts.length];
+                    const mx = ((p1.x + p2.x)/200)*img.width, my = ((p1.y + p2.y)/200)*img.height;
+                    let edgeLen = 0;
+                    if(i+1 < l.pts.length && l.edges[i+1]) { edgeLen = l.edges[i+1]; }
+                    else { const dx = (p2.x - p1.x)/100 * img.width, dy = (p2.y - p1.y)/100 * img.height; edgeLen = Math.sqrt(dx*dx + dy*dy) / l.scale; }
+                    ctx.fillStyle='rgba(0,0,0,0.8)'; ctx.fillRect(mx-35,my-15,70,30);
+                    ctx.fillStyle='#fff'; ctx.font='bold 16px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(edgeLen.toFixed(2)+'m', mx, my);
+                 }
+              }
             }
           }); r(cvs.toDataURL('image/jpeg',0.9));
         }; img.src=session.blueprint;
