@@ -65,25 +65,28 @@
     /* KRYTYCZNE STYLE DLA WYDRUKU PDF */
     @page { size: A4; margin: 0; }
 
-    @media print {
-      body { background: #fff !important; color: #000 !important; overflow: visible !important; height: auto !important; }
+   @media print {
+      @page { size: A4; margin: 0; }
+      body, html { background: #fff !important; color: #000 !important; width: 210mm !important; margin: 0 auto !important; padding: 0 !important; }
       .no-print, header, nav, #structure-subbar, #floating-tools-container, .modal-backdrop { display: none !important; }
       
-      /* Tylko AKTYWNY widok jest drukowany */
       .view-panel.hidden { display: none !important; }
-      .view-panel:not(.hidden) { display: block !important; position: static !important; height: auto !important; overflow: visible !important; }
+      .view-panel:not(.hidden) { display: block !important; position: static !important; }
+      .print-panel { display: block !important; position: static !important; width: 210mm !important; margin: 0 auto !important; }
       
-      .print-panel { display: block !important; position: static !important; width: 100% !important; height: auto !important; overflow: visible !important; }
-      
-     .a4-page {
-        margin: 0 !important;
-        box-shadow: none !important;
-        border: none !important;
+      .a4-page {
+        width: 210mm !important;
+        height: 296mm !important; /* Sztywna wysokość zabije puste strony */
+        max-height: 296mm !important;
+        margin: 0 auto !important; /* Centrowanie na środku */
+        padding: 10mm 15mm !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
         page-break-after: always !important;
         page-break-inside: avoid !important;
-        min-height: 296mm !important;
-        height: max-content !important;
-        padding: 10mm 15mm !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: white !important;
       }
       .a4-page:last-child { page-break-after: auto !important; }
     }
@@ -1515,22 +1518,22 @@
         if(l.type==='line') {
           const x1=(l.pts[0].x/100)*iw, y1=(l.pts[0].y/100)*ih, x2=(l.pts[1].x/100)*iw, y2=(l.pts[1].y/100)*ih, mx=(x1+x2)/2, my=(y1+y2)/2;
           takeoffSvgLayer.innerHTML += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#10b981" stroke-width="4"/><circle cx="${x1}" cy="${y1}" r="8" fill="#10b981"/><circle cx="${x2}" cy="${y2}" r="8" fill="#10b981"/><rect x="${mx-45}" y="${my-16}" width="90" height="32" fill="#000" rx="4"/><text x="${mx}" y="${my+5}" fill="#fff" font-size="16" text-anchor="middle" font-weight="bold">${l.label}</text>`;
-  } else {
+} else {
           const path = l.pts.map((p,i)=>`${i===0?'M':'L'}${(p.x/100)*iw},${(p.y/100)*ih}`).join(' ')+' Z';
           let cx=0, cy=0; l.pts.forEach(p=>{ cx+=(p.x/100)*iw; cy+=(p.y/100)*ih; }); cx/=l.pts.length; cy/=l.pts.length;
-          takeoffSvgLayer.innerHTML += `<path d="${path}" fill="rgba(37,99,235,0.3)" stroke="#2563eb" stroke-width="3"/><rect x="${cx-45}" y="${cy-16}" width="90" height="32" fill="#000" rx="4"/><text x="${cx}" y="${cy+5}" fill="#fff" font-size="16" text-anchor="middle" font-weight="bold">${l.label}</text>`;
+          takeoffSvgLayer.innerHTML += `<path d="${path}" fill="rgba(37,99,235,0.3)" stroke="#2563eb" stroke-width="3"/><rect x="${cx-55}" y="${cy-16}" width="110" height="32" fill="#000" rx="4"/><text x="${cx}" y="${cy+5}" fill="#fff" font-size="16" text-anchor="middle" font-weight="bold">${l.label}</text>`;
           
           if(l.edges && l.scale) {
              for(let i=0; i<l.pts.length; i++) {
-                let p1 = l.pts[i], p2 = l.pts[(i+1)%l.pts.length];
-                const mx = ((p1.x + p2.x)/200)*iw, my = ((p1.y + p2.y)/200)*ih;
-                let edgeLen = 0;
-                if(i+1 < l.pts.length && l.edges[i+1]) { edgeLen = l.edges[i+1]; }
-                else { const dx = (p2.x - p1.x)/100 * iw, dy = (p2.y - p1.y)/100 * ih; edgeLen = Math.sqrt(dx*dx + dy*dy) / l.scale; }
-                takeoffSvgLayer.innerHTML += `<rect x="${mx-25}" y="${my-10}" width="50" height="20" fill="rgba(0,0,0,0.7)" rx="4"/><text x="${mx}" y="${my+4}" fill="#fff" font-size="12" text-anchor="middle">${edgeLen.toFixed(2)}m</text>`;
+                // Etykieta pojawi się TYLKO na boku, którego długość wpisałeś ręcznie
+                if(i+1 < l.pts.length && l.edges[i+1]) {
+                   let p1 = l.pts[i], p2 = l.pts[i+1];
+                   const mx = ((p1.x + p2.x)/200)*iw, my = ((p1.y + p2.y)/200)*ih;
+                   let edgeLen = l.edges[i+1];
+                   takeoffSvgLayer.innerHTML += `<rect x="${mx-25}" y="${my-10}" width="50" height="20" fill="rgba(0,0,0,0.8)" rx="4"/><text x="${mx}" y="${my+4}" fill="#fff" font-size="12" text-anchor="middle">${edgeLen.toFixed(2)}m</text>`;
+                }
              }
           }
-        }
       });
       
       // Temp drawing m2
@@ -1591,23 +1594,23 @@
                 const x1=(l.pts[0].x/100)*img.width, y1=(l.pts[0].y/100)*img.height, x2=(l.pts[1].x/100)*img.width, y2=(l.pts[1].y/100)*img.height;
                 ctx.strokeStyle='#10b981'; ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
                 ctx.fillStyle='#000'; ctx.fillRect((x1+x2)/2-55,(y1+y2)/2-20,110,40); ctx.fillStyle='#fff'; ctx.font='bold 22px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(l.label,(x1+x2)/2,(y1+y2)/2);
-              } else {
-                ctx.fillStyle='rgba(37,99,235,0.3)'; ctx.strokeStyle='#2563eb'; ctx.lineWidth=4; ctx.beginPath();
-                l.pts.forEach((p,i)=> i===0?ctx.moveTo((p.x/100)*img.width,(p.y/100)*img.height):ctx.lineTo((p.x/100)*img.width,(p.y/100)*img.height)); ctx.closePath(); ctx.fill(); ctx.stroke();
-                let cx=0, cy=0; l.pts.forEach(p=>{cx+=(p.x/100)*img.width; cy+=(p.y/100)*img.height;}); cx/=l.pts.length; cy/=l.pts.length;
-                ctx.fillStyle='#000'; ctx.fillRect(cx-55,cy-20,110,40); ctx.fillStyle='#fff'; ctx.font='bold 22px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(l.label,cx,cy);
-                
-                if(l.edges && l.scale) {
-                   for(let i=0; i<l.pts.length; i++) {
-                      let p1 = l.pts[i], p2 = l.pts[(i+1)%l.pts.length];
-                      const mx = ((p1.x + p2.x)/200)*img.width, my = ((p1.y + p2.y)/200)*img.height;
-                      let edgeLen = 0;
-                      if(i+1 < l.pts.length && l.edges[i+1]) { edgeLen = l.edges[i+1]; }
-                      else { const dx = (p2.x - p1.x)/100 * img.width, dy = (p2.y - p1.y)/100 * img.height; edgeLen = Math.sqrt(dx*dx + dy*dy) / l.scale; }
-                      ctx.fillStyle='rgba(0,0,0,0.8)'; ctx.fillRect(mx-35,my-15,70,30);
-                      ctx.fillStyle='#fff'; ctx.font='bold 16px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(edgeLen.toFixed(2)+'m', mx, my);
-                   }
-                }
+            } else {
+              ctx.fillStyle='rgba(37,99,235,0.3)'; ctx.strokeStyle='#2563eb'; ctx.lineWidth=4; ctx.beginPath();
+              l.pts.forEach((p,i)=> i===0?ctx.moveTo((p.x/100)*img.width,(p.y/100)*img.height):ctx.lineTo((p.x/100)*img.width,(p.y/100)*img.height)); ctx.closePath(); ctx.fill(); ctx.stroke();
+              let cx=0, cy=0; l.pts.forEach(p=>{cx+=(p.x/100)*img.width; cy+=(p.y/100)*img.height;}); cx/=l.pts.length; cy/=l.pts.length;
+              ctx.fillStyle='#000'; ctx.fillRect(cx-65,cy-20,130,40); ctx.fillStyle='#fff'; ctx.font='bold 22px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(l.label,cx,cy);
+              
+              if(l.edges && l.scale) {
+                 for(let i=0; i<l.pts.length; i++) {
+                    // Blokada wymyślania miar na PDF - pokaż tylko to, co wpisano
+                    if(i+1 < l.pts.length && l.edges[i+1]) {
+                       let p1 = l.pts[i], p2 = l.pts[i+1];
+                       const mx = ((p1.x + p2.x)/200)*img.width, my = ((p1.y + p2.y)/200)*img.height;
+                       let edgeLen = l.edges[i+1];
+                       ctx.fillStyle='rgba(0,0,0,0.8)'; ctx.fillRect(mx-35,my-15,70,30);
+                       ctx.fillStyle='#fff'; ctx.font='bold 16px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(edgeLen.toFixed(2)+'m', mx, my);
+                    }
+                 }
               }
             });
             masterUrl = cvs.toDataURL('image/jpeg', 0.85);
@@ -1645,7 +1648,7 @@
             <div class="border-b-2 border-black pb-2 mb-4 flex justify-between items-end"><div class="text-[12pt] font-black uppercase">ZBLIŻENIA POMIARÓW Z NATURY</div><div class="text-[9pt] font-bold text-gray-600">${session.title}</div></div>
             <div class="grid grid-cols-2 gap-4 flex-1">
               ${chunk.map(c => `
-                <div class="border border-black p-2 flex flex-col items-center bg-white justify-center h-[125mm]">
+                <div class="border border-black p-2 flex flex-col items-center bg-white justify-center h-[120mm]">
                   <img src="${c.url}" class="max-w-full max-h-full object-contain mb-2 flex-1" />
                   <div class="text-[9.5pt] font-bold text-center bg-gray-100 w-full py-1.5 border-t border-black">Wartość pomiaru: ${c.label}</div>
                 </div>
