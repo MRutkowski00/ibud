@@ -210,8 +210,8 @@
       <button onclick="switchView('todo')" id="nav-btn-todo" class="nav-tab px-3 py-1.5 rounded-lg transition-all text-gray-400 hover:text-white flex items-center gap-1.5">
         <i data-lucide="check-square" class="w-3.5 h-3.5"></i> Zadania To-Do
       </button>
-      <button onclick="switchView('calendar')" id="nav-btn-calendar" class="nav-tab px-3 py-1.5 rounded-lg transition-all text-gray-400 hover:text-white flex items-center gap-1.5">
-        <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Kalendarz & Kalendarium
+     <button onclick="switchView('calendar')" id="nav-btn-calendar" class="nav-tab px-3 py-1.5 rounded-lg transition-all text-gray-400 hover:text-white flex items-center gap-1.5">
+        <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Kalendarz
       </button>
       <button onclick="switchView('norms')" id="nav-btn-norms" class="nav-tab px-3 py-1.5 rounded-lg transition-all text-gray-400 hover:text-white flex items-center gap-1.5">
         <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Normy i Odbiory
@@ -303,14 +303,14 @@
               <span>Do zrobienia:</span><span class="font-bold text-emerald-400" id="dash-count-todos">0</span>
             </div>
           </div>
-          <div onclick="switchView('calendar')" class="bg-[#141414] hover:bg-[#1a1a1a] border border-[#262626] hover:border-amber-500/50 p-5 rounded-2xl cursor-pointer transition-all flex flex-col justify-between group shadow-xl">
+         <div onclick="switchView('calendar')" class="bg-[#141414] hover:bg-[#1a1a1a] border border-[#262626] hover:border-amber-500/50 p-5 rounded-2xl cursor-pointer transition-all flex flex-col justify-between group shadow-xl">
             <div>
               <div class="w-12 h-12 rounded-xl bg-amber-600/20 text-amber-400 border border-amber-500/30 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform"><i data-lucide="calendar" class="w-6 h-6"></i></div>
-              <h3 class="font-bold text-white text-base">Kalendarz & Kalendarium</h3>
-              <p class="text-xs text-gray-400 mt-1">Interaktywny kalendarz budowy z podziałem na wydarzenia.</p>
+              <h3 class="font-bold text-white text-base">Kalendarz</h3>
+              <p class="text-xs text-gray-400 mt-1">Planuj prace, oznaczaj opóźnienia i kontroluj harmonogram budowy.</p>
             </div>
             <div class="mt-4 pt-3 border-t border-[#222] flex items-center justify-between text-xs text-gray-300">
-              <span>Wpisy / Zdarzenia:</span><span class="font-bold text-amber-400" id="dash-count-logs">0</span>
+              <span>Wydarzenia:</span><span class="font-bold text-amber-400" id="dash-count-logs">0</span>
             </div>
           </div>
           <div onclick="switchView('norms')" class="bg-[#141414] hover:bg-[#1a1a1a] border border-[#262626] hover:border-purple-500/50 p-5 rounded-2xl cursor-pointer transition-all flex flex-col justify-between group shadow-xl">
@@ -415,19 +415,22 @@
       </div>
     </div>
 
-    <!-- 4. KALENDARZ -->
+   <!-- 4. KALENDARZ -->
     <div id="view-calendar" class="view-panel w-full h-full hidden overflow-y-auto p-4 sm:p-6 pb-28 md:pb-12 bg-[#0c0c0c]">
       <div class="max-w-4xl mx-auto space-y-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#222] pb-4">
-          <div><h2 class="text-xl font-black text-white flex items-center gap-2"><i data-lucide="calendar" class="w-6 h-6 text-amber-500"></i> Kalendarz & Kalendarium</h2></div>
-          <button onclick="openLogForDate('')" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center gap-2"><i data-lucide="plus" class="w-4 h-4"></i> Dodaj wpis / zdarzenie</button>
+          <div><h2 class="text-xl font-black text-white flex items-center gap-2"><i data-lucide="calendar" class="w-6 h-6 text-amber-500"></i> Kalendarz Budowy</h2></div>
+          <button onclick="openLogModal()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center gap-2 shadow-lg transition-transform active:scale-95"><i data-lucide="plus" class="w-4 h-4"></i> Dodaj wydarzenie</button>
         </div>
-        <div class="flex gap-2 border-b border-[#222] pb-2 text-xs font-bold">
-          <button onclick="setCalendarSubTab('schedule')" id="subtab-btn-schedule" class="px-3 py-1.5 rounded-lg bg-[#222] text-amber-400 border border-[#333]">Kalendarz prac i zdarzeń (<span id="count-schedule-items">0</span>)</button>
-          <button onclick="setCalendarSubTab('audit')" id="subtab-btn-audit" class="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white">Audyt zmian systemowych (<span id="count-audit-entries">0</span>)</button>
-        </div>
+        
         <!-- WIDŻET KALENDARZA -->
-        <div id="calendar-widget" class="bg-[#141414] border border-[#262626] rounded-xl p-4 hidden"></div>
+        <div id="calendar-widget" class="bg-[#141414] border border-[#262626] rounded-2xl p-5 shadow-xl"></div>
+        
+        <div class="flex items-center justify-between border-b border-[#222] pb-2 mt-6">
+           <h3 class="text-sm font-bold text-gray-200">Lista wydarzeń (<span id="count-schedule-items">0</span>)</h3>
+           <button onclick="renderCalendarList('all')" class="text-xs text-amber-500 hover:text-amber-400 font-semibold px-2 py-1 rounded hover:bg-amber-950/30 transition-colors">Pokaż wszystkie</button>
+        </div>
+        
         <div id="calendar-content-container" class="space-y-3"></div>
       </div>
     </div>
@@ -637,19 +640,26 @@
     </div>
   </div>
 
-  <!-- MODAL: LOG ENTRY -->
-  <div id="modal-log-entry" class="modal-backdrop fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+<!-- MODAL: LOG ENTRY (DODAJ / EDYTUJ) -->
+  <div id="modal-log-entry" class="modal-backdrop fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-[#141414] border border-[#2b2b2b] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
-      <div class="px-5 py-4 border-b border-[#222] flex justify-between"><h3 class="text-sm font-bold text-white flex gap-2"><i data-lucide="edit-3" class="w-4 h-4 text-amber-500"></i> Zdarzenie w kalendarzu</h3><button onclick="toggleElement('modal-log-entry')" class="text-gray-400"><i data-lucide="x" class="w-4 h-4"></i></button></div>
-      <div class="p-5 space-y-3 text-xs">
-        <div><label class="block text-gray-400 font-bold mb-1">Data:</label><input type="date" id="log-entry-date" class="w-full bg-[#1b1b1b] border border-[#333] rounded-lg p-2 text-white"></div>
-        <div><label class="block text-gray-400 font-bold mb-1">Tytuł pracy / zdarzenia:</label><input type="text" id="log-entry-title" class="w-full bg-[#1b1b1b] border border-[#333] rounded-lg p-2 text-white"></div>
-        <div><label class="block text-gray-400 font-bold mb-1">Notatka:</label><textarea id="log-entry-text" rows="3" class="w-full bg-[#1b1b1b] border border-[#333] rounded-lg p-2 text-white"></textarea></div>
+      <div class="px-5 py-4 border-b border-[#222] flex justify-between items-center"><h3 class="text-sm font-bold text-white flex gap-2 items-center"><i data-lucide="edit-3" class="w-4 h-4 text-amber-500"></i> Wydarzenie</h3><button onclick="toggleElement('modal-log-entry')" class="text-gray-400 hover:text-white p-1"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+      <div class="p-5 space-y-4 text-xs">
+        <input type="hidden" id="log-entry-id">
+        <div><label class="block text-gray-400 font-bold mb-1.5">Data:</label><input type="date" id="log-entry-date" class="w-full bg-[#1b1b1b] border border-[#333] rounded-xl p-2.5 text-white outline-none focus:border-amber-500 transition-colors"></div>
+        <div><label class="block text-gray-400 font-bold mb-1.5">Tytuł pracy / zdarzenia:</label><input type="text" id="log-entry-title" placeholder="np. Betonowanie stropu nad parterem" class="w-full bg-[#1b1b1b] border border-[#333] rounded-xl p-2.5 text-white outline-none focus:border-amber-500 transition-colors"></div>
+        <div><label class="block text-gray-400 font-bold mb-1.5">Notatka (opcjonalnie):</label><textarea id="log-entry-text" rows="3" placeholder="Dodatkowe informacje..." class="w-full bg-[#1b1b1b] border border-[#333] rounded-xl p-2.5 text-white outline-none focus:border-amber-500 transition-colors"></textarea></div>
       </div>
-      <div class="px-5 py-3 border-t border-[#222] bg-[#111] flex justify-end gap-2"><button onclick="toggleElement('modal-log-entry')" class="px-3.5 py-1.5 border border-[#333] rounded-lg text-xs">Anuluj</button><button onclick="saveLogbookEntry()" class="px-4 py-1.5 rounded-lg bg-amber-600 text-white text-xs">Zapisz</button></div>
+      <div class="px-5 py-3.5 border-t border-[#222] bg-[#111] flex justify-between items-center">
+        <button id="btn-delete-log" onclick="deleteLogbookEntry()" class="text-rose-500 hover:text-rose-400 font-bold text-xs flex items-center gap-1 hidden px-2 py-1"><i data-lucide="trash-2" class="w-4 h-4"></i> Usuń</button>
+        <div class="flex gap-2 ml-auto">
+           <button onclick="toggleElement('modal-log-entry')" class="px-4 py-2 border border-[#333] hover:bg-[#222] rounded-xl text-gray-300 font-semibold text-xs transition-colors">Anuluj</button>
+           <button onclick="saveLogbookEntry()" class="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-lg transition-colors">Zapisz</button>
+        </div>
+      </div>
     </div>
   </div>
-
+  
   <!-- MODAL: KALKULATOR -->
   <div id="modal-calculator" class="modal-backdrop fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-[#151515] border border-[#2b2b2b] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -948,7 +958,7 @@
       setupUniversalPanZoom(takeoffViewport, takeoffDrawingContainer, (s, x, y) => { takeoffScale = s; takeoffPanX = x; takeoffPanY = y; });
       setupBlueprintClick(); setupRoheBlueprintClick(); setupTakeoffSvgInteraction();
 
-      renderTodos(); renderCalendarGrid(); setCalendarSubTab('schedule'); renderNormCategoriesTabs();
+      renderTodos(); renderCalendarGrid(); renderCalendarList('all'); renderNormCategoriesTabs();
       renderRoheDefectTypesList(); renderRohePhotosSelection(); loadRoheBlueprint(); updateDashboardCounts();
       setupCalculatorKeyboard();
       if (window.lucide) lucide.createIcons();
@@ -1310,64 +1320,123 @@
       if(window.lucide) lucide.createIcons();
     }
 
-    /* KALENDARZ NOWY WIDGET */
+/* KALENDARZ - NOWA LOGIKA INŻYNIERSKA */
     let currentCalDate = new Date();
+    let activeCalFilter = 'all';
+
     function renderCalendarGrid() {
       const c = document.getElementById('calendar-widget'); if(!c) return;
       const year = currentCalDate.getFullYear(), month = currentCalDate.getMonth();
       const firstDay = new Date(year, month, 1).getDay() || 7;
       const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-      let html = `<div class="flex justify-between items-center mb-2">
-          <button onclick="changeCalMonth(-1)" class="p-1 text-gray-400 hover:text-white"><i data-lucide="chevron-left"></i></button>
-          <span class="font-bold text-white text-sm">${year}-${String(month+1).padStart(2,'0')}</span>
-          <button onclick="changeCalMonth(1)" class="p-1 text-gray-400 hover:text-white"><i data-lucide="chevron-right"></i></button>
+      const monthNames = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
+      
+      let html = `<div class="flex justify-between items-center mb-4">
+          <button onclick="changeCalMonth(-1)" class="p-2 bg-[#222] rounded-xl text-gray-400 hover:text-white transition-colors"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
+          <span class="font-black text-white text-base tracking-wide uppercase">${monthNames[month]} ${year}</span>
+          <button onclick="changeCalMonth(1)" class="p-2 bg-[#222] rounded-xl text-gray-400 hover:text-white transition-colors"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
       </div>
-      <div class="grid grid-cols-7 gap-1 text-center text-[10px] text-gray-500 mb-1">
-          <div>Pn</div><div>Wt</div><div>Śr</div><div>Cz</div><div>Pt</div><div>So</div><div>Nd</div>
-      </div><div class="grid grid-cols-7 gap-1 text-center text-xs">`;
+      <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-black text-gray-500 mb-2">
+          <div>PN</div><div>WT</div><div>ŚR</div><div>CZ</div><div>PT</div><div>SO</div><div>ND</div>
+      </div><div class="grid grid-cols-7 gap-1.5 text-center text-xs font-semibold">`;
 
       for(let i=1; i<firstDay; i++) html += `<div></div>`;
       for(let d=1; d<=daysInMonth; d++) {
           const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          const hasEvent = appState.calendarSchedule.some(s => s.date === dateStr) || appState.logEntries.some(l => l.date === dateStr);
-          html += `<button onclick="openLogForDate('${dateStr}')" class="p-2 rounded font-bold ${hasEvent ? 'bg-amber-600/30 text-amber-400 border border-amber-600/50' : 'bg-[#1a1a1a] text-gray-300 hover:bg-[#252525]'}">${d}</button>`;
+          const dayEvents = appState.calendarSchedule.filter(s => s.date === dateStr);
+          const hasEvent = dayEvents.length > 0;
+          const isSelected = activeCalFilter === dateStr;
+          
+          let bgClass = 'bg-[#1a1a1a] text-gray-400 hover:bg-[#252525] border border-transparent';
+          if(isSelected) bgClass = 'bg-amber-600 text-white font-black shadow-lg shadow-amber-600/30 border-amber-500 scale-105 z-10';
+          else if(hasEvent) bgClass = 'bg-amber-950/40 text-amber-400 border border-amber-800/50 hover:bg-amber-900/50';
+          
+          html += `<button onclick="renderCalendarList('${isSelected ? 'all' : dateStr}')" class="py-2.5 rounded-xl transition-all flex flex-col items-center justify-center relative ${bgClass}">
+             <span>${d}</span>
+             ${hasEvent && !isSelected ? `<span class="w-1.5 h-1.5 bg-amber-400 rounded-full absolute bottom-1 shadow-sm"></span>` : ''}
+          </button>`;
       }
       html += `</div>`; c.innerHTML = html;
       if(window.lucide) lucide.createIcons();
     }
+    
     function changeCalMonth(dir) { currentCalDate.setMonth(currentCalDate.getMonth() + dir); renderCalendarGrid(); }
-    function openLogForDate(d) { document.getElementById('log-entry-date').value = d || new Date().toISOString().slice(0,10); toggleElement('modal-log-entry'); }
-
-    function setCalendarSubTab(t) { 
-      calendarSubTab = t; 
-      document.getElementById('subtab-btn-schedule').className='px-3 py-1.5 rounded-lg text-gray-400 hover:text-white'; 
-      document.getElementById('subtab-btn-audit').className='px-3 py-1.5 rounded-lg text-gray-400 hover:text-white'; 
-      document.getElementById(`subtab-btn-${t}`).className='px-3 py-1.5 rounded-lg bg-[#222] text-amber-400 border border-[#333]'; 
-      document.getElementById('calendar-widget').classList.toggle('hidden', t!=='schedule');
-      renderCalendarList(); 
-    }
-    function saveLogbookEntry() {
-      const d = document.getElementById('log-entry-date').value;
-      appState.calendarSchedule.unshift({ id:`sch-${Date.now()}`, date:d, title:document.getElementById('log-entry-title').value, note:document.getElementById('log-entry-text').value, status:'planned' });
-      document.getElementById('log-entry-title').value = ''; document.getElementById('log-entry-text').value = ''; toggleElement('modal-log-entry'); 
-      renderCalendarGrid(); renderCalendarList(); persistData();
-    }
-    function toggleScheduleStatus(id) { const s = appState.calendarSchedule.find(s=>s.id===id); s.status = s.status==='planned'?'done':(s.status==='done'?'delayed':'planned'); renderCalendarList(); persistData(); }
-    function renderCalendarList() {
-      const c = document.getElementById('calendar-content-container'); c.innerHTML='';
-      document.getElementById('count-schedule-items').innerText = appState.calendarSchedule.length; document.getElementById('count-audit-entries').innerText = appState.auditTrail.length;
-      if(calendarSubTab === 'schedule') {
-        appState.calendarSchedule.forEach(s => {
-          const badge = s.status==='done'?'<span class="text-emerald-400">Wykonane</span>':(s.status==='delayed'?'<span class="text-rose-400">Opóźnienie</span>':'<span class="text-blue-400">Zaplanowane</span>');
-          c.innerHTML += `<div class="bg-[#141414] p-3 border border-[#222] rounded-xl flex justify-between items-center"><div class="text-xs">
-            <div class="font-bold text-amber-400 mb-1">${s.date} ${badge}</div>
-            <div class="text-white">${s.title}</div><div class="text-gray-400">${s.note}</div>
-          </div><button onclick="toggleScheduleStatus('${s.id}')" class="px-3 py-1.5 bg-[#222] rounded text-xs text-gray-300">Status</button></div>`;
-        });
+    
+    function openLogModal(id = null) {
+      const idInput = document.getElementById('log-entry-id'), dateInput = document.getElementById('log-entry-date'), titleInput = document.getElementById('log-entry-title'), textInput = document.getElementById('log-entry-text'), delBtn = document.getElementById('btn-delete-log');
+      if (id) {
+         const s = appState.calendarSchedule.find(x => x.id === id);
+         if(s) { idInput.value = s.id; dateInput.value = s.date; titleInput.value = s.title; textInput.value = s.note || ''; delBtn.classList.remove('hidden'); }
       } else {
-        appState.auditTrail.forEach(a => c.innerHTML += `<div class="bg-[#121212] p-2 border border-[#1f1f1f] rounded text-[11px] text-gray-300"><span class="text-blue-500">${a.timestamp}</span> - ${a.text}</div>`);
+         idInput.value = ''; dateInput.value = activeCalFilter !== 'all' ? activeCalFilter : new Date().toISOString().slice(0,10);
+         titleInput.value = ''; textInput.value = ''; delBtn.classList.add('hidden');
       }
+      toggleElement('modal-log-entry');
+    }
+
+    function saveLogbookEntry() {
+      const id = document.getElementById('log-entry-id').value, d = document.getElementById('log-entry-date').value, title = document.getElementById('log-entry-title').value.trim(), note = document.getElementById('log-entry-text').value.trim();
+      if(!title) { uiAlert('Musisz podać tytuł wydarzenia!'); return; }
+      
+      if (id) {
+         const s = appState.calendarSchedule.find(x => x.id === id);
+         if(s) { s.date = d; s.title = title; s.note = note; }
+      } else {
+         appState.calendarSchedule.push({ id:`sch-${Date.now()}`, date:d, title:title, note:note, status:'planned' });
+      }
+      
+      appState.calendarSchedule.sort((a,b) => new Date(b.date) - new Date(a.date));
+      toggleElement('modal-log-entry'); renderCalendarGrid(); renderCalendarList(activeCalFilter); persistData();
+    }
+    
+    function deleteLogbookEntry() {
+       const id = document.getElementById('log-entry-id').value;
+       uiConfirm('Czy na pewno chcesz bezpowrotnie usunąć to wydarzenie z kalendarza?', () => {
+          appState.calendarSchedule = appState.calendarSchedule.filter(x => x.id !== id);
+          toggleElement('modal-log-entry'); renderCalendarGrid(); renderCalendarList(activeCalFilter); persistData();
+       });
+    }
+
+    function changeScheduleStatus(id, newStatus) {
+       const s = appState.calendarSchedule.find(x=>x.id===id);
+       if(s) { s.status = newStatus; persistData(); renderCalendarList(activeCalFilter); }
+    }
+
+    function renderCalendarList(filterDate = 'all') {
+      activeCalFilter = filterDate;
+      const c = document.getElementById('calendar-content-container'); c.innerHTML='';
+      renderCalendarGrid();
+      
+      let items = appState.calendarSchedule;
+      if (filterDate !== 'all') items = items.filter(s => s.date === filterDate);
+      
+      document.getElementById('count-schedule-items').innerText = items.length;
+      
+      if(items.length === 0) {
+         c.innerHTML = `<div class="text-center py-10 text-xs text-gray-500 border border-dashed border-[#222] rounded-2xl">Brak wydarzeń dla tego dnia. Kliknij 'Dodaj wydarzenie'.</div>`;
+         return;
+      }
+      
+      items.forEach(s => {
+        let borderClass = 'border-l-4 border-blue-500';
+        if(s.status === 'done') borderClass = 'border-l-4 border-emerald-500 opacity-60 bg-[#0c0c0c]';
+        else if(s.status === 'delayed') borderClass = 'border-l-4 border-rose-500';
+
+        c.innerHTML += `<div class="bg-[#141414] p-4 border border-[#222] ${borderClass} rounded-2xl flex flex-col sm:flex-row justify-between sm:items-center gap-3 shadow-md hover:border-[#333] transition-colors group">
+          <div class="text-xs cursor-pointer flex-1" onclick="openLogModal('${s.id}')" title="Kliknij, aby edytować">
+            <div class="font-bold text-gray-400 mb-1.5 flex items-center gap-2"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> ${s.date} <span class="text-[10px] bg-[#222] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">Edytuj ✎</span></div>
+            <div class="text-white font-bold text-sm tracking-wide">${s.title}</div>
+            ${s.note ? `<div class="text-gray-400 mt-1 line-clamp-2 leading-relaxed">${s.note}</div>` : ''}
+          </div>
+          <select onchange="changeScheduleStatus('${s.id}', this.value)" class="bg-[#1a1a1a] border border-[#333] text-xs rounded-xl px-3 py-2 outline-none focus:border-amber-500 cursor-pointer shrink-0 font-bold shadow-sm ${s.status==='done'?'text-emerald-400':(s.status==='delayed'?'text-rose-400':'text-blue-400')}">
+             <option value="planned" class="text-blue-400" ${s.status==='planned'?'selected':''}>Zaplanowane</option>
+             <option value="done" class="text-emerald-400" ${s.status==='done'?'selected':''}>Wykonane</option>
+             <option value="delayed" class="text-rose-400" ${s.status==='delayed'?'selected':''}>Opóźnienie</option>
+          </select>
+        </div>`;
+      });
+      if(window.lucide) lucide.createIcons();
     }
 
     /* NORMY */
